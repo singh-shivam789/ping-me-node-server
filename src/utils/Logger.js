@@ -1,12 +1,12 @@
-import path from 'path';
-import url from 'url';
-import dotenv from 'dotenv'
-import { createWriteStream } from 'fs';
+import path from "path";
+import url from "url";
+import dotenv from "dotenv"
+import { createWriteStream } from "fs";
 dotenv.config();
 class Logger{
     #env = process.env.appEnv || "development";
     #filePath =  path.join(path.dirname(url.fileURLToPath(import.meta.url)), "..", "logs", `server-${new Date().toISOString().split("T")[0]}.log`);
-    #ws = createWriteStream(this.#filePath, {flags: 'a', encoding: 'utf-8'});
+    #ws = createWriteStream(this.#filePath, {flags: "a", encoding: "utf-8"});
     #loggerType
     constructor(loggerType){
         this.#loggerType = loggerType;
