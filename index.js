@@ -4,11 +4,15 @@ import usersRouter from './config/routes/user.js';
 import path from 'path';
 import url from 'url';
 import cors from 'cors';
-import authRouter from './config/routes/auth.js';
 const app = express();
 dotenv.config();
 const PORT = process.env.PORT;
-app.use(cors())
+app.use(cors({
+    origin: 'http://localhost:5173',
+    methods: ['GET', 'POST', 'DELETE', 'PUT'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    exposedHeaders: ['Authorization'],
+}))
 app.use(express.urlencoded({ extended: false }));
 app.use(express.raw());
 app.use(express.json());
