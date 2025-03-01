@@ -1,15 +1,15 @@
-import { ObjectId } from 'mongodb';
-import express from 'express';
-import bcrypt from 'bcryptjs';
-import dbClient from '../config/db_config.js';
-import crypto from 'crypto';
-import jwt from 'jsonwebtoken'
-import auth from '../auth/auth.js';
+import { ObjectId } from "mongodb";
+import express from "express";
+import bcrypt from "bcryptjs";
+import dbClient from "../config/db_config.js";
+import crypto from "crypto";
+import jwt from "jsonwebtoken"
+import auth from "../auth/auth.js";
 const usersRouter = express.Router();
 const db = dbClient.db("test");
 const usersCollection = db.collection("users");
 
-usersRouter.get('/', auth, async (req, res) => {
+usersRouter.get("/", auth, async (req, res) => {
 
     return res.status(200).json({
         "code": 200,
@@ -17,7 +17,7 @@ usersRouter.get('/', auth, async (req, res) => {
     });
 })
 
-usersRouter.post('/', auth, async (req, res) => {
+usersRouter.post("/", auth, async (req, res) => {
     try {
         let data = await usersCollection.find({ email: req.body.email }).toArray();
         return res.json({
@@ -34,7 +34,7 @@ usersRouter.post('/', auth, async (req, res) => {
     }
 });
 
-usersRouter.post('/create', auth, async (req, res) => {
+usersRouter.post("/create", auth, async (req, res) => {
     try {
         let userData = req.body;
         let data = await usersCollection.find({ "email": userData.email }).toArray();
