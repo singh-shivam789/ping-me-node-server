@@ -1,5 +1,6 @@
 import { defaultLogger, errorLogger, getResponseLogInput } from "./src/utils/LoggerUtils.js";
 import usersRouter from "./src/routes/user.js";
+import cookieParser from "cookie-parser";
 import express from "express"
 import dotenv from "dotenv"
 import path from "path";
@@ -17,7 +18,8 @@ try {
         methods: ["GET", "POST", "DELETE", "PUT"],
         allowedHeaders: ["Content-Type", "Authorization"],
         exposedHeaders: ["Authorization"],
-    }))
+    }));
+    app.use(cookieParser());
     app.use(responseLogger(getResponseLogInput, "info"));
     app.use(express.urlencoded({ extended: false }));
     app.use(express.raw());
