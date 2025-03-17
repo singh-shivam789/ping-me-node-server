@@ -2,6 +2,8 @@ import path from "path";
 import url from "url";
 import dotenv from "dotenv"
 import fs from "fs-extra";
+import clc from "cli-color";
+
 dotenv.config();
 const logsDir = path.join(
     path.dirname(url.fileURLToPath(import.meta.url)),
@@ -27,30 +29,30 @@ class Logger {
     }
 
     #consoleLogger(level, textInput) {
-        const formattedMessage = `${JSON.stringify(textInput)}`;
+        const formattedMessage = `[${level.toString().toUpperCase()}] ${JSON.stringify(textInput)}`;
 
         switch (level) {
             case "info":
-                console.info(formattedMessage);
+                console.info(clc.blue(formattedMessage));
                 break;
             case "warn":
-                console.warn(formattedMessage);
+                console.warn(clc.yellow(formattedMessage));
                 break;
             case "debug":
                 if (this.#env === "development") {
-                    console.debug(formattedMessage);
+                    console.debug(clc.white(formattedMessage));
                 }
                 break;
             case "error":
-                console.error(formattedMessage);
+                console.error(clc.red(formattedMessage));
                 break;
             default:
-                console.log(formattedMessage);
+                console.log(clc.green(formattedMessage));
         }
     }
 
     #fileBasedLogger(level, textInput) {
-        const formattedMessage = `${JSON.stringify(textInput)}\n`;
+        const formattedMessage = `[${level.toString().toUpperCase()}] ${JSON.stringify(textInput)}\n`;
         this.#ws.write(formattedMessage, () => { });
     }
 };
