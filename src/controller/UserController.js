@@ -8,10 +8,12 @@ class UserController {
     getUserByIdentifier = async (req, res) => {
         try {
             const { email, username } = req.query;
-            if (!email && !username) throw new Error("Invalid request, email or username can't be empty");
-            const identifier = email || username;
-            const userResponse = await this.#userService.getUserByIdentifier(identifier);
-            return res.status(200).json(userResponse);
+            if (!email && !username) return res.status(400).json({
+                code: 400,
+                message: "Invalid Request"
+            });
+            const response = await this.#userService.getUserByIdentifier(req.query);
+            return res.status(response.code).json(response);
         }
         catch (error) {
             errorLogger("error", error.stack);

@@ -33,10 +33,14 @@ class UserService {
         }
     }
 
-    async getUserByIdentifier(identifier) {
+    async getUserByIdentifier(queryParams) {
         try {
-            if (isEmail(identifier)) {
-                const user = await this.#usersCollection.findOne({ "email": identifier });
+            if(queryParams.email){
+                if(!isEmail(queryParams.email)) return {
+                    code: 400,
+                    message: "Invalid email or username"
+                }
+                const user = await this.#usersCollection.findOne({ "email": queryParams.email });
                 if (!user) {
                     return {
                         code: 404,
@@ -49,8 +53,8 @@ class UserService {
                     data: user
                 };
             }
-            else {
-                const user = await this.#usersCollection.findOne({ "username": identifier });
+            else{
+                const user = await this.#usersCollection.findOne({ "username": queryParams.username });
                 if (!user) {
                     return {
                         code: 404,
