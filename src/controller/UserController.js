@@ -16,7 +16,7 @@ class UserController {
         catch (error) {
             errorLogger("error", error.stack);
             return res.status(500).json({
-                message: error.stack,
+                message: error.message,
                 error: "Error while fetching user by identifier"
             });
         }
@@ -30,7 +30,7 @@ class UserController {
         } catch (error) {
             errorLogger("error", error.stack);
             return res.status(500).json({
-                message: error.stack,
+                message: error.message,
                 error: "Error while fetching user by id"
             });
         }
@@ -43,7 +43,7 @@ class UserController {
         } catch (error) {
             errorLogger("error", error.stack);
             return res.status(500).json({
-                message: error.stack,
+                message: error.message,
                 error: "Error while fetching users"
             });
         }
@@ -57,7 +57,7 @@ class UserController {
         } catch (error) {
             errorLogger("error", error.stack);
             return res.status(500).json({
-                message: error.stack,
+                message: error.message,
                 error: "Error while creating the user"
             });
         }
@@ -79,7 +79,7 @@ class UserController {
         } catch (error) {
             errorLogger("error", error.stack);
             return res.status(500).json({
-                message: error.stack,
+                message: error.message,
                 error: "Error while signing in."
             });
         }
@@ -92,7 +92,7 @@ class UserController {
         } catch (error) {
             errorLogger("error", error.stack);
             return res.status(500).json({
-                message: error.stack,
+                message: error.message,
                 error: "Error while signing out."
             });
         }
@@ -106,7 +106,7 @@ class UserController {
         } catch (error) {
             errorLogger("error", error.stack);
             return res.status(500).json({
-                message: error.stack,
+                message: error.message,
                 error: "Error while deleting user"
             });
         }
