@@ -23,14 +23,14 @@ class Logger {
     }
 
     #getLogger() {
-        if (this.#loggerType === "console") return this.#consoleLogger.bind(this);
-        else if (this.#loggerType === "file") return this.#fileBasedLogger.bind(this);
-        else return this.#consoleLogger.bind(this);
+        if (this.#loggerType === "console") return this.#devLogger.bind(this);
+        else if (this.#loggerType === "file") return this.#prodLogger.bind(this);
+        else return this.#devLogger.bind(this);
     }
 
-    #consoleLogger(level, textInput) {
-        const formattedMessage = `[${level.toString().toUpperCase()}] ${JSON.stringify(textInput)}`;
-
+    #devLogger(level, textInput) {
+        const formattedMessage = `[${level.toString().toUpperCase()}] ${textInput}`;
+        this.#ws.write(formattedMessage+'\n', () => { });
         switch (level) {
             case "info":
                 console.info(clc.blue(formattedMessage));
@@ -51,8 +51,8 @@ class Logger {
         }
     }
 
-    #fileBasedLogger(level, textInput) {
-        const formattedMessage = `[${level.toString().toUpperCase()}] ${JSON.stringify(textInput)}\n`;
+    #prodLogger(level, textInput) {
+        const formattedMessage = `[${level.toString().toUpperCase()}] ${textInput}\n`;
         this.#ws.write(formattedMessage, () => { });
     }
 };

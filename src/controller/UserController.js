@@ -14,9 +14,9 @@ class UserController {
             return res.status(200).json(userResponse);
         }
         catch (error) {
-            errorLogger("error", error.message);
+            errorLogger("error", error.stack);
             return res.status(500).json({
-                message: error.message,
+                message: error.stack,
                 error: "Error while fetching user by identifier"
             });
         }
@@ -28,9 +28,9 @@ class UserController {
             const response = await this.#userService.getUserById(id);
             return res.status(response.code).json(response);
         } catch (error) {
-            errorLogger("error", error.message);
+            errorLogger("error", error.stack);
             return res.status(500).json({
-                message: error.message,
+                message: error.stack,
                 error: "Error while fetching user by id"
             });
         }
@@ -41,9 +41,9 @@ class UserController {
             const response = await this.#userService.getUsers();
             return res.status(response.code).json(response);
         } catch (error) {
-            errorLogger("error", error.message);
+            errorLogger("error", error.stack);
             return res.status(500).json({
-                message: error.message,
+                message: error.stack,
                 error: "Error while fetching users"
             });
         }
@@ -55,9 +55,9 @@ class UserController {
             const response = await this.#userService.createUser(userData);
             return res.status(response.code).json(response);
         } catch (error) {
-            errorLogger("error", error.message);
+            errorLogger("error", error.stack);
             return res.status(500).json({
-                message: error.message,
+                message: error.stack,
                 error: "Error while creating the user"
             });
         }
@@ -77,9 +77,9 @@ class UserController {
                 message: response.message
             });
         } catch (error) {
-            errorLogger("error", error.message);
+            errorLogger("error", error.stack);
             return res.status(500).json({
-                message: error.message,
+                message: error.stack,
                 error: "Error while signing in."
             });
         }
@@ -90,9 +90,9 @@ class UserController {
             let response = await this.#userService.signOut(req);
             return res.status(response.code).json(response);
         } catch (error) {
-            errorLogger("error", error.message);
+            errorLogger("error", error.stack);
             return res.status(500).json({
-                message: error.message,
+                message: error.stack,
                 error: "Error while signing out."
             });
         }
@@ -104,9 +104,9 @@ class UserController {
             let response = await this.#userService.deleteUser(id, req);
             return res.status(response.code).json(response);
         } catch (error) {
-            errorLogger("error", error.message);
+            errorLogger("error", error.stack);
             return res.status(500).json({
-                message: error.message,
+                message: error.stack,
                 error: "Error while deleting user"
             });
         }

@@ -1,9 +1,10 @@
-import ConsoleLogger from "./ConsoleLogger.js";
-import FileLogger from "./FileLogger.js";
+import ProdLogger from "./ProdLogger.js";
+import DevLogger from "./DevLogger.js";
 import dotenv from "dotenv"
+
 dotenv.config();
 const appEnv = process.env.APP_ENV;
-const logger = appEnv === "development" ? new ConsoleLogger() : new FileLogger();
+const logger = appEnv === "development" ? new DevLogger() : new ProdLogger();
 
 export function getRequestLogInput(req, res) {
   const timestamp = new Date().toLocaleDateString();

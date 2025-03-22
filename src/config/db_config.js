@@ -21,7 +21,7 @@ try {
         await client.close()
     )
 } catch (error) {
-    errorLogger("error", error.message);
+    errorLogger("error", error.stack);
 }
 
 export default client;

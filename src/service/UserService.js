@@ -1,5 +1,4 @@
 import dotenv from "dotenv";
-import crypto from "crypto";
 import jwt from "jsonwebtoken"
 import bcrypt from "bcryptjs";
 import { ObjectId } from "mongodb";
@@ -30,7 +29,7 @@ class UserService {
             };
         } catch (error) {
             errorLogger("error", "Error while fetching all users");
-            throw new Error(error.message);
+            throw new Error(error.stack);
         }
     }
 
@@ -67,7 +66,7 @@ class UserService {
         }
         catch (error) {
             errorLogger("error", "Error while fetching user by identifier");
-            throw new Error(error.message);
+            throw new Error(error.stack);
         }
     }
 
@@ -91,7 +90,7 @@ class UserService {
             };
         } catch (error) {
             errorLogger("error", "Error while fetching user by Id");
-            throw new Error(error.message);
+            throw new Error(error.stack);
         }
     }
 
@@ -114,7 +113,7 @@ class UserService {
 
         } catch (error) {
             errorLogger("error", "Error while creating the user");
-            throw new Error(error.message);
+            throw new Error(error.stack);
         }
     }
 
@@ -154,7 +153,7 @@ class UserService {
 
         } catch (error) {
             errorLogger("error", "Error while logging in");
-            throw new Error(error.message);
+            throw new Error(error.stack);
         }
     }
 
@@ -163,7 +162,7 @@ class UserService {
             req.clearCookies()
         } catch (error) {
             errorLogger("error", "Error while signing out");
-            throw new Error(error.message);
+            throw new Error(error.stack);
         }
     }
 
@@ -184,7 +183,7 @@ class UserService {
             }
         } catch (error) {
             errorLogger("error", "Error while deleting the user");
-            throw new Error(error.message);
+            throw new Error(error.stack);
         }
     }
 }

@@ -9,7 +9,7 @@ export function authorizer(req, res, next) {
         jsonwebtoken.verify(req.cookies.token, JWT_SECRET);
         next();
     } catch (error) {
-        errorLogger("error", error.message);
+        errorLogger("error", error.stack);
         return res.status(401).json({
             code: 401, 
             message: "Session expired or invalid token, please sign in again"
