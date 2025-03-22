@@ -17,7 +17,7 @@ class UserService {
 
     async getUsers() {
         try {
-            let users = await this.#usersCollection.find({}).toArray();
+            const users = await this.#usersCollection.find({}).toArray();
             if (!users || !users.length) return {
                 code: 404,
                 message: "Not found!"
@@ -25,7 +25,7 @@ class UserService {
             return {
                 code: 200,
                 message: "Successful",
-                data: users
+                users: users
             };
         } catch (error) {
             errorLogger("error", "Error while fetching all users");
@@ -96,21 +96,25 @@ class UserService {
 
     async createUser(userData) {
         try {
+            if (!isEmail(userData.email)) {
+                return {
+                    code: 400,
+                    message: "Invalid request"
+                }
+            }
             let user = await this.#usersCollection.findOne({ "email": userData.email });
             if (!user) {
                 userData.password = await bcrypt.hash(userData.password, await bcrypt.genSalt());
-                user = await this.#usersCollection.insertOne({ ...userData });
+                await this.#usersCollection.insertOne({ ...userData });
                 return {
                     code: 201,
-                    message: "Successful",
-                    data: user
+                    message: "Successful"
                 }
             }
-            return {
+            else return {
                 code: 409,
                 message: "Resource already exists"
             }
-
         } catch (error) {
             errorLogger("error", "Error while creating the user");
             throw new Error(error.stack);
@@ -120,44 +124,49 @@ class UserService {
     async signIn(userData) {
         try {
             const { email, password } = userData;
-            const user = await this.#usersCollection.findOne({ "email": email });
-            if (!user) {
-                return {
-                    code: 404,
-                    message: "User not found!"
+            if (isEmail(email)) {
+                const user = await this.#usersCollection.findOne({ "email": email });
+                if (!user) {
+                    return {
+                        code: 404,
+                        message: "User not found!"
+                    }
+                }
+
+                const isPasswordValid = await bcrypt.compare(password, user.password);
+                if (!isPasswordValid)
+                    return {
+                        code: 400,
+                        message: "Wrong Password"
+                    }
+                else {
+                    const iat = Math.floor(Date.now() / 1000);
+                    const token = jwt.sign(
+                        {
+                            "sub": user._id,
+                            "iat": iat,
+                            "exp": iat + 3600,
+                        },
+                        process.env.JWT_SECRET
+                    )
+                    return {
+                        code: 200,
+                        message: "Successful",
+                        token: token
+                    }
                 }
             }
-
-            let isPasswordValid = await bcrypt.compare(password, user.password);
-            if (!isPasswordValid)
-                return {
-                    code: 400,
-                    message: "Wrong Password"
-                }
-            else {
-                const iat = Math.floor(Date.now() / 1000);
-                const token = jwt.sign(
-                    {
-                        "sub": user._id,
-                        "iat": iat,
-                        "exp": iat + 3600,
-                    },
-                    process.env.JWT_SECRET
-                )
-                return {
-                    code: 200,
-                    message: "Successful",
-                    token: token
-                }
+            else return {
+                code: 400,
+                message: "Invalid request"
             }
-
         } catch (error) {
             errorLogger("error", "Error while logging in");
             throw new Error(error.stack);
         }
     }
 
-    async signOut(res){
+    async signOut(res) {
         try {
             res.clearCookie("token");
             return {
@@ -170,20 +179,20 @@ class UserService {
         }
     }
 
-    async deleteUser(id, req) {
+    async deleteUser(id, res) {
         try {
-            let user = await this.#usersCollection.findOne({ "_id": new ObjectId(id) });
+            const user = await this.#usersCollection.findOne({ "_id": new ObjectId(id) });
             if (!user) {
                 return {
                     code: 404,
                     message: "Resource does not exist"
                 }
             }
-            let response = await this.#usersCollection.deleteOne({ "_id": new ObjectId(id) });
+            await this.#usersCollection.deleteOne({ "_id": new ObjectId(id) });
+            res.clearCookie("token");
             return {
                 code: 200,
-                message: "Successful",
-                data: response
+                message: "Successful"
             }
         } catch (error) {
             errorLogger("error", "Error while deleting the user");
