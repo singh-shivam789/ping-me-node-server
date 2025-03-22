@@ -12,7 +12,7 @@ try {
     usersRouter.get("/all", authorizer, userController.getUsers);
     usersRouter.post("/signup", userController.createUser);
     usersRouter.post("/signin", userController.signIn);
-    usersRouter.post("signout", userController.signOut)
+    usersRouter.post("/signout", userController.signOut)
     usersRouter.get("/", authorizer, userController.getUserByIdentifier);
     usersRouter.get("/:id", authorizer, userController.getUserById);
     usersRouter.delete("/:id", authorizer, userController.deleteUser);

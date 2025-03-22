@@ -157,9 +157,13 @@ class UserService {
         }
     }
 
-    async signOut(req){
+    async signOut(res){
         try {
-            req.clearCookies()
+            res.clearCookie("token");
+            return {
+                code: 200,
+                message: "Succesful"
+            }
         } catch (error) {
             errorLogger("error", "Error while signing out");
             throw new Error(error.stack);
