@@ -22,12 +22,12 @@ export const logFilesValidator = async () => {
                 const currFileSize = currFile.size;
                 const currFileCreationTime = currFile.birthtime;
                 const currDateTime = new Date(Date.now());
-                const ageInDays = Math.floor((currDateTime - currFileCreationTime) / (1000 * 60 * 60 * 24));
+                const ageInDays = Math.ceil((currDateTime - currFileCreationTime) / (1000 * 60 * 60 * 24));
 
                 if (currFileSize == 0){
                     await deleteFile(currFilePath);
                 } 
-                else if (ageInDays > 7 || currFileSize >= 1024 * 1024){
+                else if (ageInDays >= 7 || currFileSize >= 1024 * 1024 * 5){
                     await moveFile(currFilePath, transmittedFilePath);
                 }
 

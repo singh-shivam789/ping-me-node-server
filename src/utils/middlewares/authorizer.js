@@ -1,6 +1,6 @@
+import { errorLogger } from "../LoggerUtils.js";
 import jsonwebtoken from "jsonwebtoken";
 import dotenv from "dotenv";
-import { errorLogger, defaultLogger } from "../LoggerUtils.js";
 dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET;

@@ -6,21 +6,21 @@ import express from "express";
 
 const userService = new UserService();
 const userController = new UserController(userService);
-const usersRouter = express.Router();
+const userRouter = express.Router();
 
 try {
-    usersRouter.get("/all", authorizer, userController.getUsers);
-    usersRouter.post("/signup", userController.createUser);
-    usersRouter.post("/signin", userController.signIn);
-    usersRouter.post("/signout", authorizer, userController.signOut)
-    usersRouter.get("/", authorizer, userController.getUserByIdentifier);
-    usersRouter.get("/:id", authorizer, userController.getUserById);
-    usersRouter.delete("/:id", authorizer, userController.deleteUser);
-    usersRouter.use((req, res) => {
+    userRouter.get("/validate", authorizer, userController.getUserValidationState);
+    userRouter.post("/signup", userController.createUser);
+    userRouter.post("/signin", userController.signIn);
+    userRouter.post("/signout", userController.signOut);
+    userRouter.get("/", authorizer, userController.getUserByIdentifier);
+    userRouter.get("/:id", authorizer, userController.getUserById);
+    userRouter.delete("/:id", authorizer, userController.deleteUser);
+    userRouter.use((req, res) => {
         return res.status(404).json({ message: "Route not found" });
     });
 } catch (error) {
     errorLogger("error", error.stack);
 }
 
-export default usersRouter;
+export default userRouter;

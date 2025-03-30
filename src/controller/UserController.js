@@ -1,8 +1,14 @@
 import { errorLogger } from "../utils/LoggerUtils.js";
+import jsonwebtoken from "jsonwebtoken";
+import dotenv from 'dotenv';
+dotenv.config();
+
 class UserController {
     #userService
+    #env
     constructor(userService) {
         this.#userService = userService;
+        this.#env = process.env.APP_ENV === "production"
     }
 
     getUserByIdentifier = async (req, res) => {
@@ -66,14 +72,20 @@ class UserController {
             const userData = req.body;
             const response = await this.#userService.signIn(userData);
             const jwtToken = response.token;
-            return res.cookie(
-                "token", jwtToken, {
-                    "httpOnly": true
-                }
-            ).status(response.code).json({
-                code: response.code,
-                message: response.message
-            });
+            return res
+                .cookie("token", jwtToken, {
+                    httpOnly: true,
+                    secure: false,
+                    sameSite: "Lax",
+                    maxAge: 1000 * 60 * 60,
+                    path: "/",
+                })
+                .status(response.code)
+                .json({
+                    code: response.code,
+                    message: response.message,
+                    user: response.user,
+                });
         } catch (error) {
             errorLogger("error", error.stack);
             return res.status(500).json({
@@ -81,18 +93,16 @@ class UserController {
             });
         }
     }
-    
+
     signOut = async (req, res) => {
         try {
             let response = await this.#userService.signOut(res);
             return res.status(response.code).json(response);
         } catch (error) {
             errorLogger("error", error.stack);
-            return res.status(500).json({
-                error: "Error while signing out."
-            });
+            return res.status(500).json({ error: "Error while signing out." });
         }
-    }
+    };
 
     deleteUser = async (req, res) => {
         try {
@@ -103,6 +113,21 @@ class UserController {
             errorLogger("error", error.stack);
             return res.status(500).json({
                 error: "Error while deleting user"
+            });
+        }
+    }
+
+    getUserValidationState = async (req, res) => {
+        try {
+            return res.status(200).json({
+                "code": 200,
+                "message": "Successful",
+                "isUserValidated": true
+            });
+        } catch (error) {
+            errorLogger("error", error.stack);
+            return res.status(500).json({
+                error: "Error while validating user"
             });
         }
     }

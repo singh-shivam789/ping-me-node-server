@@ -35,8 +35,8 @@ class UserService {
 
     async getUserByIdentifier(queryParams) {
         try {
-            if(queryParams.email){
-                if(!isEmail(queryParams.email)) return {
+            if (queryParams.email) {
+                if (!isEmail(queryParams.email)) return {
                     code: 400,
                     message: "Invalid email or username"
                 }
@@ -53,7 +53,7 @@ class UserService {
                     data: user
                 };
             }
-            else{
+            else {
                 const user = await this.#usersCollection.findOne({ "username": queryParams.username });
                 if (!user) {
                     return {
@@ -156,7 +156,8 @@ class UserService {
                     return {
                         code: 200,
                         message: "Successful",
-                        token: token
+                        token: token,
+                        user: user
                     }
                 }
             }
