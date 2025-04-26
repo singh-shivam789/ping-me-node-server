@@ -29,7 +29,8 @@ class Logger {
     }
 
     #devLogger(level, textInput) {
-        const formattedMessage = `[${level.toString().toUpperCase()}] ${textInput}`;
+        const timestamp = `${new Date().toLocaleDateString()} | ${new Date().getHours()}:${new Date().getMinutes()}:${new Date().getSeconds()}`
+        const formattedMessage = `[${level.toString().toUpperCase()}] [${timestamp}] ${textInput}`;
         this.#ws.write(formattedMessage+'\n', () => { });
         switch (level) {
             case "info":
@@ -52,7 +53,8 @@ class Logger {
     }
 
     #prodLogger(level, textInput) {
-        const formattedMessage = `[${level.toString().toUpperCase()}] ${textInput}\n`;
+        const timestamp = `${new Date().toLocaleDateString()} | ${new Date().getHours()}:${new Date().getMinutes()}:${new Date().getSeconds()}`
+        const formattedMessage = `[${level.toString().toUpperCase()}] [${timestamp}] ${textInput}`;
         this.#ws.write(formattedMessage, () => { });
     }
 };

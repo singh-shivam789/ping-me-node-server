@@ -7,12 +7,12 @@ const appEnv = process.env.APP_ENV;
 const logger = appEnv === "development" ? new DevLogger() : new ProdLogger();
 
 export function getRequestLogInput(req, res) {
-  const timestamp = new Date().toLocaleDateString();
+  const timestamp = `${new Date().toLocaleDateString()} | ${new Date().getHours()}:${new Date().getMinutes()}:${new Date().getSeconds()}`;
   return `[${timestamp}] - [REQUEST] - ${req.method} ${req.originalUrl}`;
 }
 
 export function getResponseLogInput(req, res) {
-  const timestamp = new Date().toLocaleDateString();
+  const timestamp = `${new Date().toLocaleDateString()} | ${new Date().getHours()}:${new Date().getMinutes()}:${new Date().getSeconds()}`;
   return `[${timestamp}] - [RESPONSE] - ${req.method} ${req.originalUrl} - Status: ${res.statusCode}`;
 }
 
