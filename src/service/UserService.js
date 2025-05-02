@@ -50,7 +50,7 @@ class UserService {
                 return {
                     code: 200,
                     message: "Successful",
-                    data: user
+                    user: user
                 };
             }
             else {
@@ -64,7 +64,7 @@ class UserService {
                 return {
                     code: 200,
                     message: "Successful",
-                    data: user
+                    user: user
                 };
             }
         }
@@ -117,7 +117,7 @@ class UserService {
             }
             else return {
                 code: 409,
-                message: "Resource already exists"
+                message: "An account already exists with this email"
             }
         } catch (error) {
             errorLogger("error", "Error while creating the user");
@@ -201,6 +201,122 @@ class UserService {
             }
         } catch (error) {
             errorLogger("error", "Error while deleting the user");
+            throw new Error(error.stack);
+        }
+    }
+
+    async sendFriendRequest(friendReqData) {
+        try {
+            const { id, friendEmail } = friendReqData;
+            const friend = await this.#usersCollection.findOne({ "email": friendEmail });
+            const user = await this.#usersCollection.findOne({"_id": new ObjectId(id)});
+            if (!friend) {
+                return {
+                    code: 404,
+                    message: "Could not find a user with this email"
+                }
+            }
+
+            await this.#usersCollection.updateOne({ "_id": new ObjectId(user._id) }, {
+                $addToSet: { "friendRequests.sent": friend.email }
+            });
+
+            await this.#usersCollection.updateOne({ "_id": new ObjectId(friend._id) }, {
+                $addToSet: { "friendRequests.received": user.email }
+            })
+
+            const updatedUser = await this.#usersCollection.findOne({ "_id": new ObjectId(user._id) });
+
+            return {
+                code: 201,
+                message: "Successful",
+                user: updatedUser
+            }
+
+        } catch (error) {
+            errorLogger("error", "Error while sending friend request");
+            throw new Error(error.stack);
+        }
+    }
+
+    async updateFriendRequestStatus(reqData) {
+        try {
+            const id = reqData.id;
+            const friendEmail = reqData.friendEmail;
+            const friendRequestDecision = reqData.friendRequestDecision;
+            const friend = await this.#usersCollection.findOne({ "email": friendEmail });
+            const user = await this.#usersCollection.findOne({"_id": new ObjectId(id)});
+            if (!friend) {
+                return {
+                    code: 404,
+                    message: "Could not find a user with this email"
+                }
+            }
+
+            if (friendRequestDecision === "reject") {
+                await this.#usersCollection.updateOne({ "_id": new ObjectId(user._id) }, {
+                    $pull: {
+                        "friendRequests.received": friend.email
+                    }
+                });
+                await this.#usersCollection.updateOne({ "_id": new ObjectId(friend._id) }, {
+                    $pull: {
+                        "friendRequests.sent": user.email
+                    }
+                });
+                const updatedUser = await this.#usersCollection.findOne({ "_id": new ObjectId(user._id) });
+                return {
+                    code: 201,
+                    message: "Successful",
+                    user: updatedUser
+                }
+            }
+            else {
+                await this.#usersCollection.updateOne({ "_id": new ObjectId(user._id) }, {
+                    $pull: {
+                        "friendRequests.received": friend.email
+                    },
+                    $addToSet: {
+                        "friends": friend.email
+                    }
+                });
+
+                await this.#usersCollection.updateOne({ "_id": new ObjectId(friend._id) }, {
+                    $pull: {
+                        "friendRequests.sent": user.email
+                    },
+                    $addToSet: {
+                        "friends": user.email
+                    }
+                });
+
+                const updatedUser = await this.#usersCollection.findOne({ "_id": new ObjectId(user._id) });
+
+                return {
+                    code: 201,
+                    message: "Successful",
+                    user: updatedUser
+                }
+            }
+        } catch (error) {
+            errorLogger("error", "Error while updating friend request status");
+            throw new Error(error.stack);
+        }
+    }
+
+    async getUsersByEmail(reqData) {
+        try { 
+            let emails = reqData.emails;
+            const users = await this.#usersCollection.find({
+                "email": { $in: emails }
+            }).toArray();
+            return {
+                code: 200,
+                message: "Successful",
+                users: users
+            }
+        } catch (error) {
+            errorLogger("error", "Error while fetching users by email");
             throw new Error(error.stack);
         }
     }

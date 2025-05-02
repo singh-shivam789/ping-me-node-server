@@ -10,6 +10,7 @@ const usersRouter = express.Router();
 
 try {
     usersRouter.get("/all", authorizer, userController.getUsers);
+    usersRouter.post("/by-email", authorizer, userController.getUsersByEmail);
     usersRouter.use((req, res) => {
         return res.status(404).json({ message: "Route not found" });
     });

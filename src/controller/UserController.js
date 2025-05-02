@@ -131,6 +131,44 @@ class UserController {
             });
         }
     }
+
+    sendFriendRequest = async (req, res) => {
+        try {
+            const friendReqData = req.body;
+            const response = await this.#userService.sendFriendRequest(friendReqData);
+            return res.status(response.code).json(response);
+        } catch (error) {
+            errorLogger("error", error.stack);
+            return res.status(500).json({
+                error: "Error while sending friend request"
+            });
+        }
+    }
+
+    updateFriendRequestStatus = async (req, res) => {
+        try {
+            const response = await this.#userService.updateFriendRequestStatus(req.body);
+            return res.status(response.code).json(response);
+        } catch (error) {
+            errorLogger("error", error.stack);
+            return res.status(500).json({
+                error: "Error while updating friend request status"
+            });
+        }
+    }
+
+    getUsersByEmail = async (req, res) => {
+        try {
+            const response = await this.#userService.getUsersByEmail(req.body);
+            return res.status(response.code).json(response);
+        }
+        catch (error) {
+            errorLogger("error", error.stack);
+            return res.status(500).json({
+                error: "Error while getting users by email"
+            });
+        }
+    }
 }
 
 export default UserController;
