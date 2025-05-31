@@ -57,6 +57,7 @@ try {
                 const rawCookie = socket.handshake.headers.cookie || "";
                 const { token } = cookie.parse(rawCookie);
                 if (!token) {
+                    errorLogger("error", "Auth Error");
                     return next(new Error("Authentication Error"));
                 }
                 const userId = jsonwebtoken.verify(token, JWT_SECRET).sub;

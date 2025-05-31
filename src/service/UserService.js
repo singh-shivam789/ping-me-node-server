@@ -110,7 +110,7 @@ class UserService {
             if (!user) {
                 userData.password = await bcrypt.hash(userData.password, await bcrypt.genSalt());
                 await this.#usersCollection.insertOne({ ...userData });
-                user = await this.#usersCollection.findOne({"email": userData.email});
+                user = await this.#usersCollection.findOne({ "email": userData.email });
                 return {
                     code: 201,
                     message: "Successful",
@@ -155,11 +155,15 @@ class UserService {
                         },
                         process.env.JWT_SECRET
                     )
+                    const friends = await this.#usersCollection.find(
+                        { email: { $in: user.friends } },
+                        { projection: {_id: 1, username: 1, email: 1, pfp: 1 } }).toArray();
                     return {
                         code: 200,
                         message: "Successful",
                         token: token,
-                        user: user
+                        user: user,
+                        friends: friends
                     }
                 }
             }

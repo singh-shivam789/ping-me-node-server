@@ -94,6 +94,7 @@ class UserController {
                     code: response.code,
                     message: response.message,
                     user: response.user,
+                    friends: response.friends
                 });
         } catch (error) {
             errorLogger("error", error.stack);
@@ -172,7 +173,28 @@ class UserController {
     updateFriendRequestStatus = async (req, res) => {
         try {
             const response = await this.#userService.updateFriendRequestStatus(req.body);
-            return res.status(response.code).json(response);
+            if (response.code === 201) {
+                const io = req.app.get("io");
+                const userSocketMap = req.app.get("userSocketMap");
+
+                const friendSocketId = userSocketMap.get(response.friend._id.toString());
+                const userSocketId = userSocketMap.get(response.user._id.toString());
+                if (friendSocketId) {
+                    io.to(friendSocketId).emit("friend-request-status-changed", {
+                        updatedUser: response.friend
+                    });
+                }
+                if (userSocketId) {
+                    io.to(userSocketId).emit("friend-request-status-changed", {
+                        updatedUser: response.user
+                    });
+                }
+            }
+            return res.status(response.code).json({
+                code: response.code,
+                message: response.message,
+                user: response.user
+            });
         } catch (error) {
             errorLogger("error", error.stack);
             return res.status(500).json({
