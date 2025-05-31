@@ -110,9 +110,11 @@ class UserService {
             if (!user) {
                 userData.password = await bcrypt.hash(userData.password, await bcrypt.genSalt());
                 await this.#usersCollection.insertOne({ ...userData });
+                user = await this.#usersCollection.findOne({"email": userData.email});
                 return {
                     code: 201,
-                    message: "Successful"
+                    message: "Successful",
+                    newUser: user
                 }
             }
             else return {
@@ -209,7 +211,7 @@ class UserService {
         try {
             const { id, friendEmail } = friendReqData;
             const friend = await this.#usersCollection.findOne({ "email": friendEmail });
-            const user = await this.#usersCollection.findOne({"_id": new ObjectId(id)});
+            const user = await this.#usersCollection.findOne({ "_id": new ObjectId(id) });
             if (!friend) {
                 return {
                     code: 404,
@@ -226,11 +228,13 @@ class UserService {
             })
 
             const updatedUser = await this.#usersCollection.findOne({ "_id": new ObjectId(user._id) });
+            const updatedFriend = await this.#usersCollection.findOne({ "_id": new ObjectId(friend._id) });
 
             return {
                 code: 201,
                 message: "Successful",
-                user: updatedUser
+                user: updatedUser,
+                updatedFriend: updatedFriend
             }
 
         } catch (error) {
@@ -245,7 +249,7 @@ class UserService {
             const friendEmail = reqData.friendEmail;
             const friendRequestDecision = reqData.friendRequestDecision;
             const friend = await this.#usersCollection.findOne({ "email": friendEmail });
-            const user = await this.#usersCollection.findOne({"_id": new ObjectId(id)});
+            const user = await this.#usersCollection.findOne({ "_id": new ObjectId(id) });
             if (!friend) {
                 return {
                     code: 404,
@@ -264,12 +268,6 @@ class UserService {
                         "friendRequests.sent": user.email
                     }
                 });
-                const updatedUser = await this.#usersCollection.findOne({ "_id": new ObjectId(user._id) });
-                return {
-                    code: 201,
-                    message: "Successful",
-                    user: updatedUser
-                }
             }
             else {
                 await this.#usersCollection.updateOne({ "_id": new ObjectId(user._id) }, {
@@ -289,14 +287,16 @@ class UserService {
                         "friends": user.email
                     }
                 });
+            }
 
-                const updatedUser = await this.#usersCollection.findOne({ "_id": new ObjectId(user._id) });
+            const updatedUser = await this.#usersCollection.findOne({ "_id": new ObjectId(user._id) });
+            const updatedFriend = await this.#usersCollection.findOne({ "_id": new ObjectId(friend._id) });
 
-                return {
-                    code: 201,
-                    message: "Successful",
-                    user: updatedUser
-                }
+            return {
+                code: 201,
+                message: "Successful",
+                user: updatedUser,
+                friend: updatedFriend
             }
         } catch (error) {
             errorLogger("error", "Error while updating friend request status");
@@ -305,7 +305,7 @@ class UserService {
     }
 
     async getUsersByEmail(reqData) {
-        try { 
+        try {
             let emails = reqData.emails;
             const users = await this.#usersCollection.find({
                 "email": { $in: emails }

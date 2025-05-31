@@ -1,5 +1,4 @@
 import { errorLogger } from "../utils/LoggerUtils.js";
-import jsonwebtoken from "jsonwebtoken";
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -58,6 +57,16 @@ class UserController {
         try {
             const userData = req.body;
             const response = await this.#userService.createUser(userData);
+            if (response.code === 201) {
+                const io = req.app.get("io");
+                try {
+                    io.emit("user-registered", {
+                        newUser: response.newUser
+                    });
+                } catch (err) {
+                    console.log("Error in socket emit");
+                }
+            }
             return res.status(response.code).json(response);
         } catch (error) {
             errorLogger("error", error.stack);
@@ -136,6 +145,21 @@ class UserController {
         try {
             const friendReqData = req.body;
             const response = await this.#userService.sendFriendRequest(friendReqData);
+            if (response.code === 201) {
+                const io = req.app.get("io");
+                const userSocketMap = req.app.get("userSocketMap");
+                const updatedUser = response.user;
+                const updatedFriend = response.updatedFriend;
+
+                const friendSocketId = userSocketMap.get(updatedFriend._id.toString());
+                if (friendSocketId) {
+                    io.to(friendSocketId).emit("friend-request-received", {
+                        sentFrom: { ...updatedUser },
+                        to: { ...updatedFriend }
+                    });
+                }
+            }
+
             return res.status(response.code).json(response);
         } catch (error) {
             errorLogger("error", error.stack);

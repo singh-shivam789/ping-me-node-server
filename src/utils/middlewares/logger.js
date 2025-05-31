@@ -1,7 +1,7 @@
 import { getLogLevelFromStatusCode } from "../LoggerUtils.js";
-import DevLogger from "../DevLogger.js";
 import { errorLogger } from "../LoggerUtils.js";
 import ProdLogger from "../ProdLogger.js";
+import DevLogger from "../DevLogger.js";
 import dotenv from "dotenv"
 dotenv.config();
 const appEnv = process.env.APP_ENV;

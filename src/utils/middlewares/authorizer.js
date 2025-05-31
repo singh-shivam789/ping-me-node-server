@@ -12,7 +12,8 @@ export function authorizer(req, res, next) {
         errorLogger("error", error.stack);
         return res.status(401).json({
             code: 401, 
-            message: "Session expired or invalid token, please sign in again"
+            message: "Session expired or invalid token, please sign in again",
+            "isUserValidated": false
         });
     }
 }
