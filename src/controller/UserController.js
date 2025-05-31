@@ -155,8 +155,8 @@ class UserController {
                 const friendSocketId = userSocketMap.get(updatedFriend._id.toString());
                 if (friendSocketId) {
                     io.to(friendSocketId).emit("friend-request-received", {
-                        sentFrom: { ...updatedUser },
-                        to: { ...updatedFriend }
+                        sentFrom: updatedUser,
+                        to: updatedFriend
                     });
                 }
             }
