@@ -176,17 +176,13 @@ class UserController {
             if (response.code === 201) {
                 const io = req.app.get("io");
                 const userSocketMap = req.app.get("userSocketMap");
-
+                const friendRequestDecision = req.body.friendRequestDecision;
                 const friendSocketId = userSocketMap.get(response.friend._id.toString());
-                const userSocketId = userSocketMap.get(response.user._id.toString());
                 if (friendSocketId) {
                     io.to(friendSocketId).emit("friend-request-status-changed", {
-                        updatedUser: response.friend
-                    });
-                }
-                if (userSocketId) {
-                    io.to(userSocketId).emit("friend-request-status-changed", {
-                        updatedUser: response.user
+                        to: response.friend,
+                        sentFrom: response.user,
+                        friendRequestStatus: friendRequestDecision
                     });
                 }
             }
