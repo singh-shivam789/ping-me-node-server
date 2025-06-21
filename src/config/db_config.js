@@ -30,10 +30,12 @@ export async function ensureIndexes(db) {
     try {
         defaultLogger("info", "Setting up indexes");
         const usersCollection = db.collection("users");
+        const chatsCollection = db.collection("chats");
         await usersCollection.createIndex({ email: 1 }, { unique: true });
         await usersCollection.createIndex({ "friendRequests.sent": 1 });
         await usersCollection.createIndex({ "friendRequests.received": 1 });
         await usersCollection.createIndex({ username: 1 }, { unique: false });
+        await chatsCollection.createIndex({ participants: 1 });
     } catch (error) {
         errorLogger("error", error.stack);
     }

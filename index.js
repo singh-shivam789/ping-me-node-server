@@ -4,6 +4,7 @@ import { logValidatorInitializer } from "./src/utils/middlewares/logValidatorIni
 import { requestLogger, responseLogger } from "./src/utils/middlewares/logger.js";
 import usersRouter from "./src/routes/users.js";
 import userRouter from "./src/routes/user.js";
+import chatRouter from "./src/routes/chat.js";
 import cookieParser from "cookie-parser";
 import express from "express";
 import dotenv from "dotenv";
@@ -37,6 +38,7 @@ try {
     app.use(express.json());
     app.use(express.static(path.join(path.dirname(url.fileURLToPath(import.meta.url)), "public")));
     app.use("/user", userRouter);
+    app.use("/chats", chatRouter);
     app.use("/users", usersRouter);
     app.use((req, res, next) => {
         res.status(404).json({ message: "Route not found" });
