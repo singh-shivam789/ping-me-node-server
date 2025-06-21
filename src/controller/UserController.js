@@ -63,8 +63,8 @@ class UserController {
                     io.emit("user-registered", {
                         newUser: response.newUser
                     });
-                } catch (err) {
-                    console.log("Error in socket emit");
+                } catch (error) {
+                    errorLogger("error", "Unknown socket error");
                 }
             }
             return res.status(response.code).json(response);
@@ -146,12 +146,11 @@ class UserController {
         try {
             const friendReqData = req.body;
             const response = await this.#userService.sendFriendRequest(friendReqData);
-            if (response.code === 201) {
-                const io = req.app.get("io");
-                const userSocketMap = req.app.get("userSocketMap");
+            const io = req.app.get("io");
+            const userSocketMap = req.app.get("userSocketMap");
+            if (io && userSocketMap && response.code === 201) {
                 const updatedUser = response.user;
                 const updatedFriend = response.updatedFriend;
-
                 const friendSocketId = userSocketMap.get(updatedFriend._id.toString());
                 if (friendSocketId) {
                     io.to(friendSocketId).emit("friend-request-received", {
@@ -177,19 +176,34 @@ class UserController {
                 const io = req.app.get("io");
                 const userSocketMap = req.app.get("userSocketMap");
                 const friendRequestDecision = req.body.friendRequestDecision;
+                if (io && userSocketMap && response.code == 201) {
                 const friendSocketId = userSocketMap.get(response.friend._id.toString());
-                if (friendSocketId) {
-                    io.to(friendSocketId).emit("friend-request-status-changed", {
-                        to: response.friend,
-                        sentFrom: response.user,
-                        friendRequestStatus: friendRequestDecision
-                    });
+                    if (response.initiatedChat != null) {
+                        io.to(friendSocketId).emit("friend-request-status-changed", {
+                            to: response.friend,
+                            sentFrom: response.user,
+                            friendRequestStatus: friendRequestDecision,
+                            initiatedChat: response.initiatedChat
+                        });
+                    }
+                    else {
+                        io.to(friendSocketId).emit("friend-request-status-changed", {
+                            to: response.friend,
+                            sentFrom: response.user,
+                            friendRequestStatus: friendRequestDecision
+                        });
+                    }
                 }
             }
-            return res.status(response.code).json({
+            return response.initiatedChat ? res.status(response.code).json({
                 code: response.code,
                 message: response.message,
-                user: response.user
+                user: response.user,
+                initiatedChat: response.initiatedChat
+            }) : res.status(response.code).json({
+                code: response.code,
+                message: response.message,
+                user: response.user,
             });
         } catch (error) {
             errorLogger("error", error.stack);
@@ -208,6 +222,19 @@ class UserController {
             errorLogger("error", error.stack);
             return res.status(500).json({
                 error: "Error while getting users by email"
+            });
+        }
+    }
+
+    removeFriend = async (req, res) => {
+        try {
+            const response = await this.#userService.removeFriend(req.body);
+            return res.status(response.code).json(response);
+        }
+        catch (error) {
+            errorLogger("error", error.stack);
+            return res.status(500).json({
+                error: "Error while removing friend"
             });
         }
     }

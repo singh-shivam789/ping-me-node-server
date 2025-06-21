@@ -15,6 +15,7 @@ try {
     userRouter.post("/signout", userController.signOut);
     userRouter.post("/friendRequest", authorizer, userController.sendFriendRequest);
     userRouter.patch("/friendRequest", authorizer, userController.updateFriendRequestStatus);
+    userRouter.patch("/removeFriend", authorizer, userController.removeFriend);
     userRouter.get("/", authorizer, userController.getUserByIdentifier);
     userRouter.get("/:id", authorizer, userController.getUserById);
     userRouter.delete("/:id", authorizer, userController.deleteUser);

@@ -4,20 +4,27 @@ import bcrypt from "bcryptjs";
 import { ObjectId } from "mongodb";
 import dbClient from "../config/db_config.js";
 import isEmail from "validator/lib/isEmail.js";
-import { errorLogger } from "../utils/LoggerUtils.js";
+import { defaultLogger, errorLogger } from "../utils/LoggerUtils.js";
+import ChatService from "./ChatService.js";
 dotenv.config();
 
 const db = dbClient.db(process.env.DB_NAME || "test");
 
 class UserService {
     #usersCollection
+    #chatService
     constructor() {
         this.#usersCollection = db.collection("users");
+        this.#chatService = new ChatService();
     }
 
     async getUsers() {
         try {
-            const users = await this.#usersCollection.find({}).toArray();
+            const users = await this.#usersCollection.find({}, {
+                projection: {
+                    _id: 1, email: 1, username: 1, pfp: 1, status: 1
+                }
+            }).toArray();
             if (!users || !users.length) return {
                 code: 404,
                 message: "Not found!"
@@ -109,8 +116,9 @@ class UserService {
             let user = await this.#usersCollection.findOne({ "email": userData.email });
             if (!user) {
                 userData.password = await bcrypt.hash(userData.password, await bcrypt.genSalt());
-                await this.#usersCollection.insertOne({ ...userData });
-                user = await this.#usersCollection.findOne({ "email": userData.email });
+                const response = await this.#usersCollection.insertOne({ ...userData });
+                await this.#chatService.initializeSelfChat({ userId: response.insertedId });
+                user = await this.#usersCollection.findOne({ "_id": response.insertedId });
                 return {
                     code: 201,
                     message: "Successful",
@@ -157,7 +165,7 @@ class UserService {
                     )
                     const friends = await this.#usersCollection.find(
                         { email: { $in: user.friends } },
-                        { projection: {_id: 1, username: 1, email: 1, pfp: 1 } }).toArray();
+                        { projection: { _id: 1, username: 1, email: 1, pfp: 1 } }).toArray();
                     return {
                         code: 200,
                         message: "Successful",
@@ -199,6 +207,7 @@ class UserService {
                     message: "Resource does not exist"
                 }
             }
+            await this.#chatService.deleteChats({ chats: user.chats });
             await this.#usersCollection.deleteOne({ "_id": new ObjectId(id) });
             res.clearCookie("token");
             return {
@@ -216,23 +225,40 @@ class UserService {
             const { id, friendEmail } = friendReqData;
             const friend = await this.#usersCollection.findOne({ "email": friendEmail });
             const user = await this.#usersCollection.findOne({ "_id": new ObjectId(id) });
+            const userEmail = user.email;
             if (!friend) {
                 return {
                     code: 404,
                     message: "Could not find a user with this email"
                 }
             }
+            const isAlreadyFriend = await this.#usersCollection.findOne(
+                {
+                    "_id": user._id,
+                    "friends": friend.email
+                },
+                {
+                    projection: { _id: 1 }
+                }
+            );
 
-            await this.#usersCollection.updateOne({ "_id": new ObjectId(user._id) }, {
-                $addToSet: { "friendRequests.sent": friend.email }
-            });
+            if (!isAlreadyFriend) {
+                await this.#usersCollection.updateOne({ "_id": new ObjectId(user._id) }, {
+                    $addToSet: { "friendRequests.sent": friend.email }
+                });
 
-            await this.#usersCollection.updateOne({ "_id": new ObjectId(friend._id) }, {
-                $addToSet: { "friendRequests.received": user.email }
-            })
+                await this.#usersCollection.updateOne({ "_id": new ObjectId(friend._id) }, {
+                    $addToSet: { "friendRequests.received": user.email }
+                })
+            }
+            const res = await this.#usersCollection.find({
+                "email": {
+                    $in: [userEmail, friendEmail]
+                }
+            }).toArray();
 
-            const updatedUser = await this.#usersCollection.findOne({ "_id": new ObjectId(user._id) });
-            const updatedFriend = await this.#usersCollection.findOne({ "_id": new ObjectId(friend._id) });
+            const updatedUser = res.find(user => user.email === userEmail);
+            const updatedFriend = res.find(user => user.email === friendEmail);
 
             return {
                 code: 201,
@@ -254,6 +280,9 @@ class UserService {
             const friendRequestDecision = reqData.friendRequestDecision;
             const friend = await this.#usersCollection.findOne({ "email": friendEmail });
             const user = await this.#usersCollection.findOne({ "_id": new ObjectId(id) });
+            const userEmail = user.email;
+            let initiatedChat = null;
+
             if (!friend) {
                 return {
                     code: 404,
@@ -274,33 +303,63 @@ class UserService {
                 });
             }
             else {
-                await this.#usersCollection.updateOne({ "_id": new ObjectId(user._id) }, {
-                    $pull: {
-                        "friendRequests.received": friend.email
-                    },
-                    $addToSet: {
+                const isAlreadyFriend = await this.#usersCollection.findOne(
+                    {
+                        "_id": user._id,
                         "friends": friend.email
-                    }
-                });
-
-                await this.#usersCollection.updateOne({ "_id": new ObjectId(friend._id) }, {
-                    $pull: {
-                        "friendRequests.sent": user.email
                     },
-                    $addToSet: {
-                        "friends": user.email
+                    {
+                        projection: { _id: 1 }
                     }
-                });
+                )
+                if (!isAlreadyFriend) {
+                    initiatedChat = await this.#chatService.initializeChat({
+                        toUser: user._id,
+                        fromUser: friend._id
+                    });
+                    await this.#usersCollection.updateOne({ "_id": new ObjectId(user._id) }, {
+                        $pull: {
+                            "friendRequests.received": friend.email
+                        },
+                        $addToSet: {
+                            "friends": friend.email,
+                            "chats": initiatedChat.data._id
+                        }
+                    });
+
+                    await this.#usersCollection.updateOne({ "_id": new ObjectId(friend._id) }, {
+                        $pull: {
+                            "friendRequests.sent": user.email
+                        },
+                        $addToSet: {
+                            "friends": user.email,
+                            "chats": initiatedChat.data._id
+                        }
+                    });
+                }
+                else {
+                    defaultLogger("warn", "Already a friend");
+                }
             }
 
-            const updatedUser = await this.#usersCollection.findOne({ "_id": new ObjectId(user._id) });
-            const updatedFriend = await this.#usersCollection.findOne({ "_id": new ObjectId(friend._id) });
-
-            return {
+            const res = await this.#usersCollection.find({
+                "email": {
+                    $in: [userEmail, friendEmail]
+                }
+            }).toArray();
+            const updatedUser = res.find(user => user.email === userEmail);
+            const updatedFriend = res.find(user => user.email === friendEmail);
+            return initiatedChat == null ? {
                 code: 201,
                 message: "Successful",
                 user: updatedUser,
                 friend: updatedFriend
+            } : {
+                code: 201,
+                message: "Successful",
+                user: updatedUser,
+                friend: updatedFriend,
+                initiatedChat: initiatedChat.data
             }
         } catch (error) {
             errorLogger("error", "Error while updating friend request status");
@@ -321,6 +380,42 @@ class UserService {
             }
         } catch (error) {
             errorLogger("error", "Error while fetching users by email");
+            throw new Error(error.stack);
+        }
+    }
+
+    async removeFriend(reqData) {
+        try {
+            const friendEmail = reqData.friendEmail;
+            const userEmail = reqData.email;
+            const commonChat = await this.#chatService.getChatByUserEmail({ email: userEmail });
+            await this.#chatService.deleteChat({ _id: commonChat.data._id });
+            await this.#usersCollection.updateOne({ "email": userEmail },
+                {
+                    $pull: {
+                        "friends": friendEmail,
+                        "chats": commonChat.data._id
+                    }
+                });
+            await this.#usersCollection.updateOne({ "email": friendEmail },
+                {
+                    $pull: {
+                        "friends": userEmail,
+                        "chats": commonChat.data._id
+                    }
+                });
+            const res = await this.#usersCollection.find({
+                "email": {
+                    $in: [userEmail, friendEmail]
+                }
+            }).toArray();
+            return {
+                code: 200,
+                updatedUser: res.find(user => user.email === userEmail),
+                updatedFriend: res.find(user => user.email === friendEmail)
+            }
+        } catch (error) {
+            errorLogger("error", "Error while removing friend");
             throw new Error(error.stack);
         }
     }
