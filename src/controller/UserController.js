@@ -177,7 +177,7 @@ class UserController {
                 const userSocketMap = req.app.get("userSocketMap");
                 const friendRequestDecision = req.body.friendRequestDecision;
                 if (io && userSocketMap && response.code == 201) {
-                const friendSocketId = userSocketMap.get(response.friend._id.toString());
+                    const friendSocketId = userSocketMap.get(response.friend._id.toString());
                     if (response.initiatedChat != null) {
                         io.to(friendSocketId).emit("friend-request-status-changed", {
                             to: response.friend,
@@ -235,6 +235,30 @@ class UserController {
             errorLogger("error", error.stack);
             return res.status(500).json({
                 error: "Error while removing friend"
+            });
+        }
+    }
+
+    sendMessage = async (req, res) => {
+        try {
+            const response = await this.#userService.sendMessage(req.body);
+            const io = req.app.get("io");
+            const userSocketMap = req.app.get("userSocketMap");
+            const friendId = req.body.friendId;
+            if (io && userSocketMap && response.code === 201) {
+                const friendSocketId = userSocketMap.get(friendId.toString());
+                if(friendSocketId){
+                    io.to(friendSocketId).emit("message-received", {
+                        toChatId: req.body.chatId,
+                        updatedChat: response.updatedChat
+                    });
+                }
+            }
+            return res.status(response.code).json(response);
+        } catch (error) {
+            errorLogger("error", error.stack);
+            return res.status(500).json({
+                error: "Error sending message"
             });
         }
     }

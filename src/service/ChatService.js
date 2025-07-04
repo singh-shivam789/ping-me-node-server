@@ -14,17 +14,31 @@ class ChatService {
         this.#userCollection = db.collection("users");
     }
 
+    async addMessageToChat(message, chatId, isSelfChat) {
+        try {
+            await this.#chatsCollection.updateOne({ _id: new ObjectId(chatId) }, {
+                $set: { lastMessage: message, read: isSelfChat },
+                $push: { messages: message }
+            })
+            const chat = await this.#chatsCollection.findOne({_id: new ObjectId(chatId)});
+            return chat;
+        } catch (error) {
+            errorLogger("error", "Error while adding message to chat");
+            throw new Error(error.stack);
+        }
+    }
+
     async getAllUserChats(reqData) {
         try {
             const userId = reqData.userId;
             const selfChat = await this.#chatsCollection.find({
-                "participants" : {
+                "participants": {
                     $in: [new ObjectId(userId)],
                     $size: 1
                 }
             }).toArray();
             const chats = await this.#chatsCollection.find({
-                "participants" : {
+                "participants": {
                     $in: [new ObjectId(userId)],
                     $size: 2
                 }
@@ -39,19 +53,19 @@ class ChatService {
         }
     }
 
-    async initializeSelfChat(reqData){
+    async initializeSelfChat(reqData) {
         try {
             const userId = reqData.userId;
             const chatData = {
                 participants: [userId],
-                lastMessage: "",
+                lastMessage: null,
                 messages: [],
                 read: true,
                 isSelfChat: true
             }
             await this.#chatsCollection.insertOne(chatData);
             return {
-                code: 201, 
+                code: 201,
                 message: "Successful"
             }
         } catch (error) {
@@ -66,7 +80,7 @@ class ChatService {
             const fromUserId = reqData.fromUser;
             const chatData = {
                 participants: [toUserId, fromUserId],
-                lastMessage: "",
+                lastMessage: null,
                 messages: [],
                 read: false,
                 isSelfChat: false
@@ -153,7 +167,7 @@ class ChatService {
             const chatIds = reqData.chats;
             const response = await this.#chatsCollection.deleteMany({
                 "_id": {
-                    $in: chatIds 
+                    $in: chatIds
                 }
             });
             return {

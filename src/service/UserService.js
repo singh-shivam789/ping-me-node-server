@@ -419,6 +419,23 @@ class UserService {
             throw new Error(error.stack);
         }
     }
+
+    async sendMessage(reqData) {
+        try {
+            //TODO: Handle image as messages & self chat messages 
+            const chatId = reqData.chatId;
+            const message = reqData.message;
+            const isSelfChat = reqData.isSelfChat;
+            const response = await this.#chatService.addMessageToChat(message, chatId, isSelfChat);
+            return {
+                code: 201,
+                updatedChat: response
+            }
+        } catch (error) {
+            errorLogger("error", "Error while sending message");
+            throw new Error(error.stack);
+        }
+    }
 }
 
 export default UserService;
