@@ -20,7 +20,7 @@ class ChatService {
                 $set: { lastMessage: message, read: isSelfChat },
                 $push: { messages: message }
             })
-            const chat = await this.#chatsCollection.findOne({_id: new ObjectId(chatId)});
+            const chat = await this.#chatsCollection.findOne({ _id: new ObjectId(chatId) });
             return chat;
         } catch (error) {
             errorLogger("error", "Error while adding message to chat");
@@ -63,10 +63,12 @@ class ChatService {
                 read: true,
                 isSelfChat: true
             }
-            await this.#chatsCollection.insertOne(chatData);
+            let response = await this.#chatsCollection.insertOne(chatData);
+            response = await this.#chatsCollection.findOne({ "_id": response.insertedId })
             return {
                 code: 201,
-                message: "Successful"
+                message: "Successful",
+                selfChat: response
             }
         } catch (error) {
             errorLogger("error", error.message);

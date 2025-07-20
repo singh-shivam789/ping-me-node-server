@@ -17,8 +17,8 @@ try {
         defaultLogger("info", "Successfully established connection to Mongo Client");
         const db = client.db(process.env.DB_NAME || "test");
         await ensureIndexes(db);
-    }).catch(err => {
-        throw err;
+    }).catch(error => {
+        throw error;
     }).finally(
         await client.close()
     )

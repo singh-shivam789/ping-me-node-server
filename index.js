@@ -6,16 +6,15 @@ import usersRouter from "./src/routes/users.js";
 import userRouter from "./src/routes/user.js";
 import chatRouter from "./src/routes/chat.js";
 import cookieParser from "cookie-parser";
+import jsonwebtoken from "jsonwebtoken";
+import { createServer } from "http";
+import { Server } from "socket.io";
 import express from "express";
 import dotenv from "dotenv";
 import cookie from "cookie";
 import path from "path";
 import cors from "cors";
 import url from "url";
-import jsonwebtoken from "jsonwebtoken";
-import { createServer } from "http";
-import { Server } from "socket.io";
-
 try {
     dotenv.config();
     const app = express();
@@ -79,6 +78,9 @@ try {
                 userSocketMap.set(userId, socket.id);
                 defaultLogger("info", `User: ${userId} joined on socket: ${socket.id}`);
             }
+            socket.on("chat-clicked", (payload) => {
+                console.log(payload)    
+            })
             socket.on("disconnect", () => {
                 if (userId) {
                     defaultLogger("info", `User: ${userId} disconnected from socket: ${socket.id}`)

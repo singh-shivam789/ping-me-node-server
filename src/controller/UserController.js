@@ -57,17 +57,22 @@ class UserController {
         try {
             const userData = req.body;
             const response = await this.#userService.createUser(userData);
-            if (response.code === 201) {
-                const io = req.app.get("io");
-                try {
-                    io.emit("user-registered", {
-                        newUser: response.newUser
-                    });
-                } catch (error) {
-                    errorLogger("error", "Unknown socket error");
-                }
-            }
-            return res.status(response.code).json(response);
+            const jwtToken = response.token;
+            return res
+                .cookie("token", jwtToken, {
+                    httpOnly: true,
+                    secure: false,
+                    sameSite: "Lax",
+                    maxAge: 1000 * 60 * 60,
+                    path: "/",
+                })
+                .status(response.code)
+                .json({
+                    code: response.code,
+                    message: response.message,
+                    user: response.newUser,
+                    selfChat: response.selfChat
+                });
         } catch (error) {
             errorLogger("error", error.stack);
             return res.status(500).json({
@@ -247,7 +252,7 @@ class UserController {
             const friendId = req.body.friendId;
             if (io && userSocketMap && response.code === 201) {
                 const friendSocketId = userSocketMap.get(friendId.toString());
-                if(friendSocketId){
+                if (friendSocketId) {
                     io.to(friendSocketId).emit("message-received", {
                         toChatId: req.body.chatId,
                         updatedChat: response.updatedChat
@@ -259,6 +264,21 @@ class UserController {
             errorLogger("error", error.stack);
             return res.status(500).json({
                 error: "Error sending message"
+            });
+        }
+    }
+
+    onboardUser = async (req, res) => {
+        try {
+            const response = await this.#userService.onboardUser({
+                userData: req.body,
+                file: req.file || null
+            });
+            return res.status(response.code).json(response);
+        } catch (error) {
+            errorLogger("error", error.stack);
+            return res.status(500).json({
+                error: "Error onboarding user"
             });
         }
     }

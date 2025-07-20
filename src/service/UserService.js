@@ -97,7 +97,7 @@ class UserService {
             return {
                 code: 200,
                 message: "Successful",
-                data: user
+                user: user
             };
         } catch (error) {
             errorLogger("error", "Error while fetching user by Id");
@@ -117,12 +117,23 @@ class UserService {
             if (!user) {
                 userData.password = await bcrypt.hash(userData.password, await bcrypt.genSalt());
                 const response = await this.#usersCollection.insertOne({ ...userData });
-                await this.#chatService.initializeSelfChat({ userId: response.insertedId });
+                const chatResponse = await this.#chatService.initializeSelfChat({ userId: response.insertedId });
                 user = await this.#usersCollection.findOne({ "_id": response.insertedId });
+                const iat = Math.floor(Date.now() / 1000);
+                const token = jwt.sign(
+                    {
+                        "sub": user._id,
+                        "iat": iat,
+                        "exp": iat + 3600,
+                    },
+                    process.env.JWT_SECRET
+                )
                 return {
                     code: 201,
                     message: "Successful",
-                    newUser: user
+                    newUser: user,
+                    token: token,
+                    selfChat: chatResponse.selfChat
                 }
             }
             else return {
@@ -131,6 +142,29 @@ class UserService {
             }
         } catch (error) {
             errorLogger("error", "Error while creating the user");
+            throw new Error(error.stack);
+        }
+    }
+
+    async onboardUser(reqData) {
+        try {
+            const { userData, file } = reqData;
+            const { username, email, status } = userData;
+            await this.#usersCollection.updateOne({ "email": email }, {
+                $set: {
+                    username: username,
+                    status: status || "Hey there, I'm using PingMe",
+                    pfp: file ? file.filename : null
+                }
+            });
+            return {
+                code: 201,
+                message: "Successful",
+                filename: file ? file.filename : null
+            }
+
+        } catch (error) {
+            errorLogger("error", "Error while onboarding the user");
             throw new Error(error.stack);
         }
     }
@@ -165,7 +199,7 @@ class UserService {
                     )
                     const friends = await this.#usersCollection.find(
                         { email: { $in: user.friends } },
-                        { projection: { _id: 1, username: 1, email: 1, pfp: 1 } }).toArray();
+                        { projection: { _id: 1, username: 1, email: 1, pfp: 1 , status: 1} }).toArray();
                     return {
                         code: 200,
                         message: "Successful",
