@@ -79,7 +79,7 @@ try {
                 defaultLogger("info", `User: ${userId} joined on socket: ${socket.id}`);
             }
             socket.on("chat-clicked", (payload) => {
-                console.log(payload)    
+                // console.log(payload)    
             })
             socket.on("disconnect", () => {
                 if (userId) {

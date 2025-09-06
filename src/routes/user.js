@@ -16,7 +16,7 @@ try {
     userRouter.post("/signin", userController.signIn);
     userRouter.post("/signout", userController.signOut);
     userRouter.post("/friendRequest", authorizer, userController.sendFriendRequest);
-    userRouter.post("/sendMessage", authorizer, userController.sendMessage);
+    userRouter.post("/sendMessage", authorizer, upload.single('file'), userController.sendMessage);
     userRouter.patch("/friendRequest", authorizer, userController.updateFriendRequestStatus);
     userRouter.patch("/removeFriend", authorizer, userController.removeFriend);
     userRouter.get("/", authorizer, userController.getUserByIdentifier);

@@ -14,11 +14,13 @@ class ChatService {
         this.#userCollection = db.collection("users");
     }
 
-    async addMessageToChat(message, chatId, isSelfChat) {
+    async addMessageToChat(reqData, file) {
+        const {chatId, isSelfChat, message} = reqData;
+        const parsedMessage = JSON.parse(message)
         try {
             await this.#chatsCollection.updateOne({ _id: new ObjectId(chatId) }, {
-                $set: { lastMessage: message, read: isSelfChat },
-                $push: { messages: message }
+                $set: { lastMessage: {...parsedMessage, media: file ? file.filename : null}, read: isSelfChat },
+                $push: { messages: {...parsedMessage, media: file ? file.filename : null} }
             })
             const chat = await this.#chatsCollection.findOne({ _id: new ObjectId(chatId) });
             return chat;

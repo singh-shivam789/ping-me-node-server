@@ -454,13 +454,10 @@ class UserService {
         }
     }
 
-    async sendMessage(reqData) {
+    async sendMessage(data) {
         try {
-            //TODO: Handle image as messages & self chat messages 
-            const chatId = reqData.chatId;
-            const message = reqData.message;
-            const isSelfChat = reqData.isSelfChat;
-            const response = await this.#chatService.addMessageToChat(message, chatId, isSelfChat);
+            const {reqData, file} = data;
+            const response = await this.#chatService.addMessageToChat(reqData, file);
             return {
                 code: 201,
                 updatedChat: response

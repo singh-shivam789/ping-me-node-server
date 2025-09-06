@@ -246,7 +246,10 @@ class UserController {
 
     sendMessage = async (req, res) => {
         try {
-            const response = await this.#userService.sendMessage(req.body);
+            const response = await this.#userService.sendMessage({
+                reqData: req.body,
+                file: req.file || null
+            });
             const io = req.app.get("io");
             const userSocketMap = req.app.get("userSocketMap");
             const friendId = req.body.friendId;
